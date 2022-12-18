@@ -5,12 +5,11 @@ ARG PROWLARR_BRANCH=develop
 
 ENV SUID=908 SGID=908
 
-LABEL maintainer="Spritsail <prowlarr@spritsail.io>" \
-      org.label-schema.vendor="Spritsail" \
-      org.label-schema.name="Prowlarr" \
-      org.label-schema.url="https://wiki.servarr.com/prowlarr/" \
-      org.label-schema.description="A indexer management & proxy tool" \
-      org.label-schema.version=${PROWLARR_VER} \
+LABEL org.opencontainers.image.authors="Spritsail <prowlarr@spritsail.io>" \
+      org.opencontainers.image.title="Prowlarr" \
+      org.opencontainers.image.url="https://wiki.servarr.com/prowlarr/" \
+      org.opencontainers.image.description="A indexer management & proxy tool" \
+      org.opencontainers.image.version=${PROWLARR_VER} \
       io.spritsail.version.prowlarr=${PROWLARR_VER}
 
 WORKDIR /prowlarr
