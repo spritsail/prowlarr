@@ -1,4 +1,4 @@
-FROM spritsail/alpine:3.16
+FROM spritsail/alpine:3.17
 
 ARG PROWLARR_VER=1.0.1.2220
 ARG PROWLARR_BRANCH=develop
