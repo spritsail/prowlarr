@@ -12,7 +12,7 @@ def main(ctx):
     depends_on.append(key)
 
   if ctx.build.branch in publish_branches:
-    builds.append(publish(depends_on))
+    builds.extend(publish(depends_on))
     builds.append(update_readme())
 
   return builds
@@ -29,12 +29,12 @@ def step(arch, key):
       {
         "name": "build",
         "pull": "always",
-        "image": "spritsail/docker-build",
+        "image": "registry.spritsail.io/spritsail/docker-build",
       },
       {
         "name": "test",
         "pull": "always",
-        "image": "spritsail/docker-test",
+        "image": "registry.spritsail.io/spritsail/docker-test",
         "settings": {
           "run_args": "-t -e SUID=0 -e API_KEY=drone",
           "curl": ":9696/api/v1/system/status",
@@ -46,7 +46,7 @@ def step(arch, key):
       {
         "name": "publish",
         "pull": "always",
-        "image": "spritsail/docker-publish",
+        "image": "registry.spritsail.io/spritsail/docker-publish",
         "settings": {
           "registry": {"from_secret": "registry_url"},
           "login": {"from_secret": "registry_login"},
@@ -60,42 +60,50 @@ def step(arch, key):
   }
 
 def publish(depends_on):
-  return {
-    "kind": "pipeline",
-    "name": "publish-manifest",
-    "depends_on": depends_on,
-    "platform": {
-      "os": "linux",
-    },
-    "steps": [
-      {
-        "name": "publish",
-        "image": "spritsail/docker-multiarch-publish",
-        "pull": "always",
-        "settings": {
-          "tags": [
-            "latest",
-            "%label io.spritsail.version.prowlarr | %auto"
-          ],
-          "src_registry": {"from_secret": "registry_url"},
-          "src_login": {"from_secret": "registry_login"},
-          "dest_repo": repo,
-          "dest_login": {"from_secret": "docker_login"},
-        },
-        "when": {
-          "branch": publish_branches,
-          "event": ["push"],
-        },
+  return [
+    {
+      "kind": "pipeline",
+      "name": "publish-manifest-%s" % name,
+      "depends_on": depends_on,
+      "platform": {
+        "os": "linux",
       },
-    ],
-  }
+      "steps": [
+        {
+          "name": "publish",
+          "image": "registry.spritsail.io/spritsail/docker-multiarch-publish",
+          "pull": "always",
+          "settings": {
+            "tags": [
+              "latest",
+              "%label io.spritsail.version.prowlarr | %auto"
+            ],
+            "src_registry": {"from_secret": "registry_url"},
+            "src_login": {"from_secret": "registry_login"},
+            "dest_registry": registry,
+            "dest_repo": repo,
+            "dest_login": {"from_secret": login_secret},
+          },
+          "when": {
+            "branch": publish_branches,
+            "event": ["push"],
+          },
+        },
+      ],
+    }
+    for name, registry, login_secret in [
+      ("dockerhub", "index.docker.io", "docker_login"),
+      ("spritsail", "registry.spritsail.io", "spritsail_login"),
+      ("ghcr", "ghcr.io", "ghcr_login"),
+    ]
+  ]
 
 def update_readme():
   return {
     "kind": "pipeline",
     "name": "update-readme",
     "depends_on": [
-      "publish-manifest",
+      "publish-manifest-dockerhub",
     ],
     "steps": [
       {
