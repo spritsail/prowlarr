@@ -1,4 +1,4 @@
-FROM spritsail/alpine:3.18
+FROM spritsail/alpine:3.22
 
 ARG PROWLARR_VER=1.37.0.5076
 ARG PROWLARR_BRANCH=master
